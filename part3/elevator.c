@@ -198,6 +198,7 @@ static void __exit hello_end(void){
 	
 	kthread_stop(proc_entry);
 	remove_proc_entry("elevate", NULL);
+	printk(KERN_INFO "Cleaning up module.\n");
 	return;
 }
 
