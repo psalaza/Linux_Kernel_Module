@@ -23,7 +23,7 @@ static struct proc_dir_entry* proc_entry2;
 struct task_struct * proc_entry;
 struct list_head passenger_list;
 
-struct { int animal; int total_size; int destination; int total_weight; struct list_head list; } elevator;
+struct { int animal; int total_size; int destination; int type; int total_weight; struct list_head list; } elevator;
 typedef struct passengers {  int destination; int animal; int weight;  struct list_head list; } Passengers;
 typedef struct floors { int start; int destination; int animal; int weight;  struct list_head list; } Floors;
 int elevator_on(void * data);
@@ -143,7 +143,7 @@ int elevator_on(void * data) {
 }
 int add_passenger(Floors* b, struct list_head * position) {
 	Passengers *people;
-	if (elevator.total_weight + b->weight > MAX_Weight)
+	if (elevator.total_weight + b->weight > MAX_Weight || (elevator.type == elevator.animal&& elevator.animal !=0) )
 		return 0;
 	printk("me2");
 	people = kmalloc(sizeof(Passengers) * 1, __GFP_RECLAIM);
@@ -151,12 +151,12 @@ int add_passenger(Floors* b, struct list_head * position) {
 	if (people == NULL)
 		return -ENOMEM;
 	people->destination = b->destination;
-	people->animal = b->animal;
 	people->weight = b->weight;
 	printk("me4");
 	list_add_tail(&people->list, &elevator.list);
 	elevator.animal += b->animal;
 	elevator.total_weight += b->weight;
+	elevator.type = b->animal;
 	elevator.total_size++;
 	printk("me5");
 	list_del(position);
@@ -169,6 +169,9 @@ int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 		elevator.animal -= a->animal;
 		elevator.total_weight -= a->weight;
 		elevator.total_size--;
+		if (elevator.animal == 0) {
+			elevator.type = 0;
+		}
 	}
 	list_del(position);  
 	kfree(a);
