@@ -27,7 +27,7 @@ struct { int animal; int total_size; int destination; int total_weight; struct l
 typedef struct passengers {  int destination; int animal; int weight;  struct list_head list; } Passengers;
 typedef struct floors { int start; int destination; int animal; int weight;  struct list_head list; } Floors;
 int elevator_on(void * data);
-int add_passenger(int animal, int floor, int weight);
+int add_passenger(Floors *b , struct list_head * position);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
 int elevator_on(void * data) {
 	int currentfloor = 1;
@@ -61,7 +61,7 @@ int elevator_on(void * data) {
 	 people1->weight = 1;
 	 list_add_tail(&people1->list, &passenger_list);
 	while (!kthread_should_stop()) {
-		ssleep(1);
+									ssleep(1);
 		printk("me");
 		a = list_first_entry_or_null(&elevator.list, Passengers, list);
 		b = list_first_entry_or_null(&passenger_list, Floors, list);
@@ -96,12 +96,7 @@ int elevator_on(void * data) {
 			list_for_each_safe(position,dummy ,&passenger_list) {
 				b = list_entry(position, Floors, list);
 				if (b->start == currentfloor) {
-					add_passenger(b->animal, b->destination, b->weight);
-					list_del(position);
-					printk("me6");
-					kfree(b);
-					printk("me7");
-					value = 1;
+					value = add_passenger(b,position);
 				}
 				printk("me8");
 			}
@@ -109,11 +104,11 @@ int elevator_on(void * data) {
 		}
 		printk("me10");
 		if (value == 1) {
-			value = 0;
-			printk("me11");
+			
+		
 			//ssleep(1);
 		}
-		
+		value = 0;
 		
 		printk("me12");
 	//	if (a != NULL) {
@@ -146,24 +141,27 @@ int elevator_on(void * data) {
 }
 	return 0;
 }
-int add_passenger(int animal,int floor,int weight) {
+int add_passenger(Floors* b, struct list_head * position) {
 	Passengers *people;
-	if (elevator.total_weight + weight > MAX_Weight)
+	if (elevator.total_weight + b->weight > MAX_Weight)
 		return 0;
 	printk("me2");
 	people = kmalloc(sizeof(Passengers) * 1, __GFP_RECLAIM);
 	printk("me3");
 	if (people == NULL)
 		return -ENOMEM;
-	people->destination = floor;
-	people->animal = animal;
-	people->weight = weight;
+	people->destination = b->destination;
+	people->animal = b->animal;
+	people->weight = b->weight;
 	printk("me4");
 	list_add_tail(&people->list, &elevator.list);
-	elevator.animal += animal;
-	elevator.total_weight += weight;
+	elevator.animal += b->animal;
+	elevator.total_weight += b->weight;
 	elevator.total_size++;
 	printk("me5");
+	list_del(position);
+	kfree(b);
+	
 	return 1;
 }
 int delete_passenger(struct list_head* position, Passengers *a,int ev) {
