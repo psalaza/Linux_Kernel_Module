@@ -27,7 +27,7 @@ struct { int animal; int total_size; int destination; int type; int total_weight
 typedef struct passengers {  int destination; int animal; int weight;  struct list_head list; } Passengers;
 typedef struct floors { int start; int destination; int animal; int weight;  struct list_head list; } Floors;
 int elevator_on(void * data);
-int add_passenger(Floors *b , struct list_head * position);
+int add_passenger(Floors *b , struct list_head * position, int onfloor);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
 int elevator_on(void * data) {
 	int currentfloor = 1;
@@ -93,10 +93,11 @@ int elevator_on(void * data) {
 					printk("me");
 				}
 			}
+		
 			list_for_each_safe(position,dummy ,&passenger_list) {
 				b = list_entry(position, Floors, list);
 				if (b->start == currentfloor) {
-					value = add_passenger(b,position);
+					value = add_passenger(b,position,currentfloor);
 				}
 				printk("me8");
 			}
@@ -141,10 +142,12 @@ int elevator_on(void * data) {
 }
 	return 0;
 }
-int add_passenger(Floors* b, struct list_head * position) {
+int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
-	if (elevator.total_weight + b->weight > MAX_Weight || (elevator.type == elevator.animal&& elevator.animal !=0) )
+	if(elevator.total_size ==0 ){}
+	else if (elevator.total_weight + b->weight > MAX_Weight || (elevator.type == elevator.animal&& elevator.animal != 0) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
 		return 0;
+	}
 	printk("me2");
 	people = kmalloc(sizeof(Passengers) * 1, __GFP_RECLAIM);
 	printk("me3");
