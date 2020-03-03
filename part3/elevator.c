@@ -30,7 +30,7 @@ typedef struct floors { int start; int destination; int animal; int weight;  str
 int elevator_on(void * data);
 int add_passenger(Floors *b , struct list_head * position, int onfloor);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
-int request(Floors * myF, struct list_head * p_list, int rStart, int rDest, int rAnimal, int rWeight);
+int request(Floors * myF, int rStart, int rDest, int rAnimal, int rWeight);
 
 
 int elevator_on(void * data) {
@@ -46,7 +46,7 @@ int elevator_on(void * data) {
 
 	// Declaration for adding a request
 
-	/*
+	Floors* people1 = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
 	if (people1 == NULL)
 		return -ENOMEM;
 	people1->start = 3;
@@ -66,13 +66,16 @@ int elevator_on(void * data) {
 	 people1->animal = 1;
 	 people1->weight = 1;
 	 list_add_tail(&people1->list, &passenger_list);
-	 */
+
+
+
 	 Floors* people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
-	 request(passenger_list, 3, 5, 1, 1);
+	 request(people_one, 3, 5, 1, 1);
 	 people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
-	 request(passenger_list, 3, 7, 1, 1);
+	 request(people_one, 3, 7, 1, 1);
 	 people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
-	 request(passenger_list, 8, 2, 1, 1);
+	 request(people_one, 8, 2, 1, 1);
+
 
 	while (!kthread_should_stop()) {
 									ssleep(1);
@@ -211,22 +214,112 @@ static int __init elevatorProtacal(void){
 	return 0;
 }
 
-int request(Floors * myF, struct list_head * p_list, int rStart, int rDest, int rAnimal, int rWeight) {
+/*
+extern long (*STUB_start_elevator)(void);
+long start_elevator(void) {
+	printk("Elevator Start Syscall");
+	return 1;
 
-	if (people_one == NULL)
+	if (stop_s) {
+    stop_s = 0;
+    printk("stop_s\n");
+    return 0;
+  } else if (mainDirection == OFFLINE) {
+    printk("Starting elevator\n");
+    mainDirection = IDLE;
+    return 0;
+  } else {
+    return 1;
+  }
+
+}
+
+
+extern long (*STUB_issue_request)(int,int,int);
+long issue_request(int passenger_type, int start_floor, int destination_floor) {
+	printk("Issue Request Syscall");
+
+	printk("New request: %d, %d => %d\n", passenger_type, start_floor, destination_floor);
+  if (start_floor == destination_floor) {
+    passengersServiced++;
+    passengersServFloor[start_floor - 1]++;
+  } else {
+    queuePassenger(passenger_type, start_floor, destination_floor);
+  }
+
+	return 0;
+}
+
+extern long (*STUB_stop_elevator)(void);
+long stop_elevator(void) {
+	printk("Stop Elevator Syscall");
+
+  printk("Stopping elevator\n");
+  if (stop_s == 1) {
+    return 1;
+  }
+  stop_s = 1;
+
+  return 0;
+}
+
+void elevator_syscalls_create(void) {
+  STUB_issue_request = &(issue_request);
+  STUB_start_elevator = &(start_elevator);
+  STUB_stop_elevator = &(stop_elevator);
+}
+
+void elevator_syscalls_remove(void) {
+  STUB_issue_request = NULL;
+  STUB_start_elevator = NULL;
+  STUB_stop_elevator = NULL;
+}
+*/
+
+int request(Floors * myF, int rStart, int rDest, int rAnimal, int rWeight) {
+
+	if (myF == NULL)
 		return -ENOMEM;
 	if (rStart > 10 || rStart < 1 || rDest > 10 || rDest < 1)
 		return -EOVERFLOW;
-	people_one->start = rStart;
-	people_one->destination = rDest;
-	people_one->animal = rAnimal;
-	people_one->weight = rWeight;
-	list_add_tail(&people_one->list, &p_list);
-
-	kfree(myF);
+	myF->start = rStart;
+	myF->destination = rDest;
+	myF->animal = rAnimal;
+	myF->weight = rWeight;
+	list_add_tail(&myF->list, &passenger_list);
 
 	return 1;
 }
+
+
+/*
+long (*STUB_issue_request)(int,int,int) = NULL;
+EXPORT_SYMBOL(STUB_issue_request);
+asmlinkage long sys_issue_request(int passenger_type, int start_floor, int destination_floor) {
+	if (STUB_issue_request)
+		return STUB_issue_request(passenger_type, start_floor, destination_floor);
+	else
+		return -ENOSYS;
+}
+
+long (*STUB_stop_elevator)(void) = NULL;
+EXPORT_SYMBOL(STUB_stop_elevator);
+asmlinkage long sys_stop_elevator(void) {
+	if (STUB_stop_elevator)
+		return STUB_stop_elevator();
+	else
+		return -ENOSYS;
+}
+
+long (*STUB_start_elevator)(void) = NULL;
+EXPORT_SYMBOL(STUB_start_elevator);
+asmlinkage long sys_start_elevator(void) {
+	if (STUB_start_elevator)
+		return STUB_start_elevator();
+	else
+		return -ENOSYS;
+}
+*/
 
 static void __exit hello_end(void){
 
