@@ -1,20 +1,20 @@
 ﻿#include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/list.h> 
-#include <linux/slab.h> 
-#include <linux/delay.h> 
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
 #include <linux/printk.h>
 #include <linux/proc_fs.h>
 #include <linux/init.h>
 #include <linux/uaccess.h>
+#include <linux/linkage.h>
+#include <linux/syscalls.h>
+
 MODULE_LICENSE("Dual BSD/GPL");
 
-
-
 #define MAX_Weight 15
-int floor;
 int count = 0;
 
 int value = 0;
@@ -26,27 +26,33 @@ struct list_head passenger_list;
 struct { int animal; int total_size; int destination; int type; int total_weight; struct list_head list; } elevator;
 typedef struct passengers {  int destination; int animal; int weight;  struct list_head list; } Passengers;
 typedef struct floors { int start; int destination; int animal; int weight;  struct list_head list; } Floors;
+
 int elevator_on(void * data);
 int add_passenger(Floors *b , struct list_head * position, int onfloor);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
+int request(Floors * myF, struct list_head * p_list, int rStart, int rDest, int rAnimal, int rWeight);
+
+
 int elevator_on(void * data) {
 	int currentfloor = 1;
 	Passengers *a;
 	Floors *b;
-	
+
 	INIT_LIST_HEAD(&elevator.list);
 	INIT_LIST_HEAD(&passenger_list);
 	struct list_head *position;
 	struct list_head *dummy;
 	printk(KERN_INFO "bob");
-	Floors* people1 = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
+
+	// Declaration for adding a request
+
+	/*
 	if (people1 == NULL)
 		return -ENOMEM;
 	people1->start = 3;
 	people1->destination = 5;
-	people1->animal =1;
+	people1->animal = 1;
 	people1->weight = 1;
-
 	list_add_tail(&people1->list, &passenger_list);
 	 people1 = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
 	 people1->start = 3;
@@ -60,6 +66,14 @@ int elevator_on(void * data) {
 	 people1->animal = 1;
 	 people1->weight = 1;
 	 list_add_tail(&people1->list, &passenger_list);
+	 */
+	 Floors* people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
+	 request(passenger_list, 3, 5, 1, 1);
+	 people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
+	 request(passenger_list, 3, 7, 1, 1);
+	 people_one = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
+	 request(passenger_list, 8, 2, 1, 1);
+
 	while (!kthread_should_stop()) {
 									ssleep(1);
 		printk("me");
@@ -68,20 +82,16 @@ int elevator_on(void * data) {
 		if (elevator.total_size != 0 && elevator.destination == 0 && a != NULL) {
 			elevator.destination = a->destination;
 			printk(KERN_INFO " elvator people %d", a->animal);
-			
+
 		}
 		else if (elevator.destination == 0 && elevator.total_size == 0 && b != NULL) {
 			elevator.destination = b->start;
 			printk(KERN_INFO " floor people %d", b->start);
 			//kfree(b);
 		}
-		
-		//if (a != NULL) {
-		//	kfree(a);
-		//}
-		//if (b != NULL) {
-		//	kfree(b);
-		//}
+
+
+		// Place Lock
 		printk(KERN_INFO " %d" ,elevator.destination);
 		printk(KERN_INFO " %d", currentfloor);
 		if (elevator.destination != 0) {
@@ -93,7 +103,8 @@ int elevator_on(void * data) {
 					printk("me");
 				}
 			}
-		
+
+		// Place Lock
 			list_for_each_safe(position,dummy ,&passenger_list) {
 				b = list_entry(position, Floors, list);
 				if (b->start == currentfloor) {
@@ -105,12 +116,12 @@ int elevator_on(void * data) {
 		}
 		printk("me10");
 		if (value == 1) {
-			
-		
+
+
 			//ssleep(1);
 		}
 		value = 0;
-		
+
 		printk("me12");
 	//	if (a != NULL) {
 	//		kfree(a);
@@ -138,10 +149,12 @@ int elevator_on(void * data) {
 		a = list_entry(position, Passengers, list);
 		printk("in elevator %d" , a->destination);
 	}
-	
+
 }
+
 	return 0;
 }
+
 int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
 	if(elevator.total_size ==0 ){}
@@ -164,9 +177,10 @@ int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	printk("me5");
 	list_del(position);
 	kfree(b);
-	
+
 	return 1;
 }
+
 int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 	if (ev == 0) {
 		elevator.animal -= a->animal;
@@ -176,11 +190,12 @@ int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 			elevator.type = 0;
 		}
 	}
-	list_del(position);  
+	list_del(position);
 	kfree(a);
 	return 0;
-	
+
 }
+
 static struct file_operations myops = {
 	.owner = THIS_MODULE,
 	//.read = procfile_read,
@@ -189,17 +204,32 @@ static struct file_operations myops = {
 static int __init elevatorProtacal(void){
 	proc_entry2 = proc_create("elevate", 0666, NULL, &myops);
 	 proc_entry  = kthread_run(elevator_on, NULL, "elevator");;
-	 
+
 	if(proc_entry == NULL)
 		return -ENOMEM;
 
 	return 0;
 }
 
+int request(Floors * myF, struct list_head * p_list, int rStart, int rDest, int rAnimal, int rWeight) {
 
+	if (people_one == NULL)
+		return -ENOMEM;
+	if (rStart > 10 || rStart < 1 || rDest > 10 || rDest < 1)
+		return -EOVERFLOW;
+	people_one->start = rStart;
+	people_one->destination = rDest;
+	people_one->animal = rAnimal;
+	people_one->weight = rWeight;
+	list_add_tail(&people_one->list, &p_list);
+
+	kfree(myF);
+
+	return 1;
+}
 
 static void __exit hello_end(void){
-	
+
 	kthread_stop(proc_entry);
 	remove_proc_entry("elevate", NULL);
 	printk(KERN_INFO "Cleaning up module.\n");
