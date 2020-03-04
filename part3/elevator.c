@@ -11,7 +11,7 @@
 #include <linux/uaccess.h>
 #include <linux/linkage.h>
 #include <linux/syscalls.h>
-#include <linux/mutex.h>
+
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -138,7 +138,7 @@ int elevator_on(void * data) {
 int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
 	if(elevator.total_size ==0 ){}
-	else if (elevator.total_weight + b->weight > MAX_Weight || (elevator.type == elevator.animal && elevator.animal != 0) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
+	else if (elevator.total_weight + b->weight > MAX_Weight || ((elevator.type == b->animal && elevator.animal != 0)|| (b->animal==0)) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
 		return 0;
 	}
 	printk("me2");
@@ -148,11 +148,14 @@ int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 		return -ENOMEM;
 	people->destination = b->destination;
 	people->weight = b->weight;
+	people->animal = b->animal;
 	printk("me4");
 	list_add_tail(&people->list, &elevator.list);
-	elevator.animal += b->animal;
+	elevator.animal += (b->weight-3);
 	elevator.total_weight += b->weight;
-	elevator.type = b->animal;
+	if (elevator.type == 0) {
+		elevator.type = b->animal;
+	}
 	elevator.total_size++;
 	printk("me5");
 	list_del(position);
@@ -206,29 +209,34 @@ int request(int rStart, int rDest, int rAnimal, int rWeight) {
 	myF->start = rStart;
 	myF->destination = rDest;
 	myF->animal = rAnimal;
-	myF->weight = rWeight;
+	myF->weight = (rWeight*rAnimal)+3;
 	list_add_tail(&myF->list, &passenger_list);
 
 	return 1;
 }
 
-extern init (*STUB_start_elevator) (void);
+extern long (*STUB_start_elevator) (void);
 int start_elevator(void) {
 	currentfloor = 1;
 	return 0;
 }
 
-extern init (*STUB_stop_elevator) (void);
+extern long (*STUB_stop_elevator) (void);
 int stop_elevator(void) {
 	elvator.destination = -1;
 	return 0;
 }
 
-extern init (*STUB_issue_request) (int passenger_type, int start_floor, int destination_floor);
-int issue_request(void) {
+extern long (*STUB_issue_request) (int, int , int,int);
+int issue_request(int num_pets, int pet_type, int  start_floor, int destination_floor) {
 	// I DO NOT THINK THIS IS CORRECT!!!!!!!!!!!!!!!!!
 	// not sure what to do with the animal variable here
-	request(start_floor, destination_floor, passenger_type/2, passenger_type);
+	int i,b;
+	get_random_bytes(&i, sizeof(int));
+	i = i % 4;
+	get_random_bytes(&i, sizeof(int));
+	b = 0% 2
+	request(start_floor, destination_floor, pet_type, num_pets);
 }
 
 static void __exit hello_end(void){
