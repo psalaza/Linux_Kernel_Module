@@ -79,13 +79,13 @@ int elevator_on(void * data) {
 
 
 	while (!kthread_should_stop()) {
-									ssleep(1);
+		ssleep(1);
 		printk("me");
 		a = list_first_entry_or_null(&elevator.list, Passengers, list);
 		b = list_first_entry_or_null(&passenger_list, Floors, list);
 		if (elevator.total_size != 0 && elevator.destination == 0 && a != NULL) {
 			elevator.destination = a->destination;
-			printk(KERN_INFO " elvator people %d", a->animal);
+			printk(KERN_INFO " elvator people %d", elevator.destination);
 
 		}
 		else if (elevator.destination == 0 && elevator.total_size == 0 && b != NULL) {
@@ -96,6 +96,7 @@ int elevator_on(void * data) {
 
 
 		// Place Lock
+		printk(KERN_INFO " %d", elevator.total_size);
 		printk(KERN_INFO " %d" ,elevator.destination);
 		printk(KERN_INFO " %d", currentfloor);
 		if (elevator.destination != 0) {
@@ -162,10 +163,11 @@ int elevator_on(void * data) {
 int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
 	if(elevator.total_size ==0 ){}
-	else if (elevator.total_weight + b->weight > MAX_Weight || (elevator.type == elevator.animal&& elevator.animal != 0) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
+	else if (((elevator.total_weight + b->weight )> MAX_Weight) || (elevator.type != b->animal&& elevator.animal != 0) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
+		printk("me2");
 		return 0;
 	}
-	printk("me2");
+	
 	people = kmalloc(sizeof(Passengers) * 1, __GFP_RECLAIM);
 	printk("me3");
 	if (people == NULL)
