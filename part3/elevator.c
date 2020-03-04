@@ -43,7 +43,7 @@ int elevator_on(void * data) {
 	struct list_head *position;
 	struct list_head *dummy;
 	printk(KERN_INFO "bob");
-
+	int pack =0;
 	// Declaration for adding a request
 
 	/*
@@ -79,6 +79,7 @@ int elevator_on(void * data) {
 
 
 	while (!kthread_should_stop()) {
+		pack = 0;
 		ssleep(1);
 		printk("me");
 		a = list_first_entry_or_null(&elevator.list, Passengers, list);
@@ -115,7 +116,9 @@ int elevator_on(void * data) {
 				list_for_each_safe(position, dummy, &passenger_list) {
 					b = list_entry(position, Floors, list);
 					if (b->start == currentfloor) {
-						value = add_passenger(b, position, currentfloor);
+						pack = add_passenger(b, position, currentfloor);
+						if (pack == 1) {
+						}
 					}
 					printk("me8");
 				}
