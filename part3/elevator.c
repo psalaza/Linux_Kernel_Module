@@ -1,4 +1,4 @@
-﻿#include <linux/module.h>
+#include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -229,8 +229,6 @@ int stop_elevator(void) {
 
 extern long (*STUB_issue_request) (int, int , int,int);
 int issue_request(int num_pets, int pet_type, int  start_floor, int destination_floor) {
-	// I DO NOT THINK THIS IS CORRECT!!!!!!!!!!!!!!!!!
-	// not sure what to do with the animal variable here
 	int i,b;
 	get_random_bytes(&i, sizeof(int));
 	i = i % 4;
