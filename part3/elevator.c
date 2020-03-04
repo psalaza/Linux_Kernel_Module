@@ -100,6 +100,7 @@ int elevator_on(void * data) {
 		printk(KERN_INFO " %d" ,elevator.destination);
 		printk(KERN_INFO " %d", currentfloor);
 		if (elevator.destination != 0) {
+
 			list_for_each_safe(position,dummy ,&elevator.list) {
 				a = list_entry(position, Passengers, list);
 				if (a->destination == currentfloor) {
@@ -110,12 +111,14 @@ int elevator_on(void * data) {
 			}
 
 		// Place Lock
-			list_for_each_safe(position,dummy ,&passenger_list) {
-				b = list_entry(position, Floors, list);
-				if (b->start == currentfloor) {
-					value = add_passenger(b,position,currentfloor);
+			if (elevator.destination != -1) {
+				list_for_each_safe(position, dummy, &passenger_list) {
+					b = list_entry(position, Floors, list);
+					if (b->start == currentfloor) {
+						value = add_passenger(b, position, currentfloor);
+					}
+					printk("me8");
 				}
-				printk("me8");
 			}
 			printk("me9");
 		}
