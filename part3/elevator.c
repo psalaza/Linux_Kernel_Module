@@ -118,6 +118,7 @@ int elevator_on(void * data) {
 					if (b->start == currentfloor) {
 						pack = add_passenger(b, position, currentfloor);
 						if (pack == 1) {
+							value = 1;
 						}
 					}
 					printk("me8");
