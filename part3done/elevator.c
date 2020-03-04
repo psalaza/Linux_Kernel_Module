@@ -55,11 +55,11 @@ int elevator_on(void * data) {
 	printk(KERN_INFO "bob");
 
 
-	 request(3, 5, 1, 1);
-	 request(3, 7, 1, 1);
-	 request(8, 2, 2, 1);
-	 request(5, 2, 1, 1);
-	 request(8, 2, 1, 2);
+	 //request(3, 5, 1, 1);
+	// request(3, 7, 1, 1);
+	// request(8, 2, 2, 1);
+	 //request(5, 2, 1, 1);
+	 //request(8, 2, 1, 2);
 
 
 	while (!kthread_should_stop()) {
@@ -117,7 +117,7 @@ int elevator_on(void * data) {
 	//	if (b != NULL) {
 	//		kfree(b);
 	//	}
-	if (elevator.destination == 0){
+	if (elevator.destination == 0 || elevator.destination == -1){
 		}
 	else if (currentfloor > elevator.destination) {
 		ssleep(2);
@@ -127,12 +127,11 @@ int elevator_on(void * data) {
 		ssleep(2);
 		currentfloor++;
 	}
-	else if (elevator.destination == currentfloor) {
+	else  {
 		elevator.destination = 0;
 		//break;
 	}
-	else if (elevator.destination == -1) {
-	}
+	
 	list_for_each_safe(position, dummy, &elevator.list) {
 		a = list_entry(position, Passengers, list);
 		printk("in elevator %d" , a->destination);
