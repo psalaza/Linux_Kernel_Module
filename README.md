@@ -21,13 +21,30 @@ Directory - SyscallModule contains:<br/>
      /Proc printing functions <br/>
     
 Makefile Description:<br/>
-In order to 
-  1) To compile project.c run:
-  > make
-  2) To begin the program run:
-  > shell
-  3) When finished run:
-  > make clean
+In order to add module:<br/>
+under /usr/src/SyscallModule run:<br/>
+  sudo make<br/>
+  insmod elevator.ko<br/><br/>
+  
+Then navigate to the directory that contains<br/>
+the provided code (producer and consumer) and run:<br/>
+  make<br/><br/>
+  
+Then, to produce passengers run:<br/>
+  ./produce.x<br/><br/>
+  
+To start the elevator:<br/>
+  ./consumer --start<br/><br/>
+  
+To view the visual representation of the elevator:<br/>
+  cat /proc/elevator<br/><br/>
+  
+If you want to stop the elevator:<br/>
+  ./consumer --stop<br/><br/>
+  
+To remove the module, navigate back to<br/>
+/usr/src/SyscallModule and run:<br/>
+  sudo rmmod elevator<br/><br/>
 
 Division of Labor:<br/><br/>
 
@@ -47,4 +64,6 @@ Division of Labor:<br/><br/>
   Commenting, Testing, and Reviewing other sections of project<br/><br/>
   
 Known Bugs:<br/>
-  1) 
+  1) If you rapidly and repeatedly call the proc/ for a few minutes after<br/>
+  the elevator has stopped, there is a small chance for a segmentation fault.<br/>
+  We do not know if we fixed this or not but it went away.
