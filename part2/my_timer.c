@@ -9,39 +9,39 @@
 MODULE_LICENSE("Dual BSD/GPL");
 
 
-int z,z1;
+int oldSec,oldNSec;
 static struct proc_dir_entry* proc_entry;
 int countt = 0;
-static char msg[100];
-static int procfs_buf_len;
 
 
 static ssize_t procfile_read(struct file *file, char *ubuf, size_t count, loff_t *ppos){
-
+	// finished variable to run proc print only once
 	static int finished = 0;
 	if(finished){
 		finished = 0;
 		return 0;
 	}
 	finished = 1;
-	struct timespec temp;
+
 	struct timespec t = current_kernel_time();
-
-	int r = (int)t.tv_sec - z;
-	int r1;
-
-	if(z1 > (int)t.tv_nsec)
-		r1 = z1 - (int)t.tv_nsec;
+	// capture the difference between the new secnds and the old seconds
+	int secDifference = (int)t.tv_sec - oldSec;
+	int nsec_Difference;
+	//make sure we subtract the larger number first to avoid negatives
+	if(oldNSec > (int)t.tv_nsec)
+		nsec_Difference = oldNSec - (int)t.tv_nsec;
 	else
-		r1 = (int)t.tv_nsec - z1;
-
-	if(countt == 0)
-		sprintf(ubuf, "current time: %10i.%09i \n",(int)t.tv_sec,(int)t.tv_nsec);
+		nsec_Difference = (int)t.tv_nsec - oldNSec;
+	//counter because first print is different then rest.
+	if (countt == 0) {
+		sprintf(ubuf, "current time: %10i.%09i \n", (int)t.tv_sec, (int)t.tv_nsec);
+	}
 	else
-		sprintf(ubuf, "current time: %10i.%09i \nelapsed time: %d.%09d \n",(int)t.tv_sec,(int)t.tv_nsec,r,r1);
+		sprintf(ubuf, "current time: %10i.%09i \nelapsed time: %d.%09d \n",(int)t.tv_sec,(int)t.tv_nsec,secDifference,nsec_Difference);
+	//setting up a temp variable to equal the values that are going to be needed as the old seconds/nseconds
+	oldSec = (int)t.tv_sec;
+	oldNSec = (int)t.tv_nsec;
 
-	z = (int)t.tv_sec;
-	z1 = (int)t.tv_nsec;
 	countt = 1;
 	return strlen(ubuf);
 		
