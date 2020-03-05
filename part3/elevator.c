@@ -76,7 +76,6 @@ int elevator_on(void * data) {
 
 	// Running the elevator
 	while (!kthread_should_stop()) {
-		ssleep(1);
 
 		// Locks implemented to avoid mixing data
 		mutex_lock_interruptible(&mutex);
