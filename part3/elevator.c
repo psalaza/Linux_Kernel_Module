@@ -17,6 +17,7 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
+// Declaration of global variables and lists
 #define MAX_Weight 15
 int count = 0;
 static char *message;
@@ -31,12 +32,15 @@ struct list_head passenger_list;
 struct mutex mutex;
 int stop=-1;
 
+
 struct { int animal; int total_size; int destination; int type; int total_weight; struct list_head list; } elevator;
 typedef struct passengers {int total;  int destination; int animal; int weight;  struct list_head list; } Passengers;
 typedef struct floors { int start; int destination; int animal; int total; int weight;  struct list_head list; } Floors;
 int elevator_on(void * data);
 int add_passenger(Floors *b , struct list_head * position, int onfloor);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
+
+// STUBs for system calls
 int request(int rStart, int rDest, int rAnimal, int rWeight);
 extern long (*STUB_start_elevator) (void);
 long start_elevator(void) {
@@ -70,9 +74,11 @@ int elevator_on(void * data) {
 	struct list_head *dummy;
 	int check=0;
 
+	// Running the elevator
 	while (!kthread_should_stop()) {
 		ssleep(1);
 
+		// Locks implemented to avoid mixing data
 		mutex_lock_interruptible(&mutex);
 		a = list_first_entry_or_null(&elevator.list, Passengers, list);
 		b = list_first_entry_or_null(&passenger_list, Floors, list);
@@ -124,10 +130,12 @@ int elevator_on(void * data) {
 
 	if (elevator.destination == 0){
 		}
+	// Going Down
 	else if (currentfloor > elevator.destination) {
 		ssleep(2);
 		currentfloor--;
 	}
+	// Going Up
 	else if (currentfloor < elevator.destination) {
 		ssleep(2);
 		currentfloor++;
@@ -142,10 +150,11 @@ int elevator_on(void * data) {
 	return 0;
 }
 
+// Adds passenger to list
 int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
 	if(elevator.total_size ==0){}
-	else  if ((elevator.total_weight + b->weight) > MAX_Weight || ((elevator.type != b->animal && elevator.animal != 0)|| (b->animal==0)) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
+	else if ((elevator.total_weight + b->weight) > MAX_Weight || ((elevator.type != b->animal && elevator.animal != 0)|| (b->animal==0)) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
 		return 0;
 	}
 	people = kmalloc(sizeof(Passengers) * 1, __GFP_RECLAIM);
@@ -170,6 +179,7 @@ int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	return 1;
 }
 
+// Deletes passenger when leaving
 int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 	if (ev == 0) {
 		elevator.animal -= a->animal;
@@ -188,6 +198,7 @@ int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 }
 
 
+// Proc to print elevator location and passengers
 ssize_t procfile_read(struct file *sp_file, char __user *buf, size_t size, loff_t *offset){
 
 	message = kmalloc(sizeof(char) * 2000, __GFP_RECLAIM | __GFP_IO | __GFP_FS);
@@ -319,11 +330,11 @@ static struct file_operations myops = {
 
 static int __init elevatorProtacal(void){
 
+	// Initialize locks and system calls
 	mutex_init(&mutex);
 	STUB_start_elevator = start_elevator;
 	STUB_stop_elevator = stop_elevator;
 	STUB_issue_request = issue_request;
-	mutex_init(&mutex);
 	proc_entry2 = proc_create("elevator", 0666, NULL, &myops);
 	proc_entry  = kthread_run(elevator_on, NULL, "elevator");
 
@@ -333,7 +344,7 @@ static int __init elevatorProtacal(void){
 	return 0;
 }
 
-
+// Used for system call issue request
 int request(int rStart, int rDest, int rAnimal, int rWeight) {
 	Floors * myF = kmalloc(sizeof(Floors) * 1, __GFP_RECLAIM);
 	if (myF == NULL)
@@ -352,6 +363,7 @@ int request(int rStart, int rDest, int rAnimal, int rWeight) {
 
 
 static void __exit hello_end(void){
+	// Stop elevator and destroy locks
 	mutex_destroy(&mutex);
 	STUB_start_elevator = NULL;
 	STUB_stop_elevator = NULL;
