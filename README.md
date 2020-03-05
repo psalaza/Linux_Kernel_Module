@@ -9,17 +9,19 @@ README.md - this file; includes file descriptions, compilation instructions, div
 
 Directory - SystemCalls contains:<br/>
   Makefile - Used to compile, declare new system calls for when kernel is compiled<br/>
-  sys_start_elevator.c - <br/>
-  sys_issue_request.c - <br/>
-  sys_stop_elevator.c - <br/>
+  sys_start_elevator.c, sys_issue_request.c, sys_stop_elevator.c - Each file<br/>
+  contains the syscall pointer and wrapper functions used to compile the added<br/>
+  system calls
   
 Directory - SyscallModule contains:<br/>
   Makefile - Used to compile kernel module and create proc/<br/>
   elevator.c - Contains majority of project code which includes:<br/>
+     Kernel module elevator implementation <br/>
+     Syscall STUBS and functions they call <br/>
+     /Proc printing functions <br/>
     
-THIS STILL NEEDS TO BE EDITED<br/>
 Makefile Description:<br/>
-In order to run the implemented shell:<br/>
+In order to 
   1) To compile project.c run:
   > make
   2) To begin the program run:
