@@ -51,7 +51,7 @@ Division of Labor:<br/><br/>
   Charles Harris:<br/>
   System Call Tracing (Part 1)<br/>
   Elevator Scheduler (Step 1)<br/>
-  Commenting, Testing, and Reviewing other sections of project<br/><br/>
+  Commenting, Testing, and Reviewing other sections of project (Steps 2 and 3)<br/><br/>
   
   Pedro Salazar:<br/>
   Kernel Module (Part 2)<br/>
