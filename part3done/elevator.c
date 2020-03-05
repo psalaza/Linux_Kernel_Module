@@ -30,7 +30,7 @@ int currentfloor;
 struct task_struct * proc_entry;
 struct list_head passenger_list;
 struct mutex mutex;
-int stop;
+int stop=-1;
 
 struct { int animal; int total_size; int destination; int type; int total_weight; struct list_head list; } elevator;
 typedef struct passengers {int total;  int destination; int animal; int weight;  struct list_head list; } Passengers;
@@ -39,6 +39,26 @@ int elevator_on(void * data);
 int add_passenger(Floors *b , struct list_head * position, int onfloor);
 int delete_passenger(struct list_head* position, Passengers *a, int ev);
 int request(int rStart, int rDest, int rAnimal, int rWeight);
+extern long (*STUB_start_elevator) (void);
+long start_elevator(void) {
+	currentfloor = 1;
+        stop =0;
+	return 0;
+}
+
+extern long (*STUB_stop_elevator) (void);
+long  stop_elevator(void) {
+	stop = -1;
+	return 0;
+}
+
+extern long (*STUB_issue_request) (int, int , int,int);
+long issue_request(int num_pets, int pet_type, int  start_floor, int destination_floor) {
+	// I DO NOT THINK THIS IS CORRECT!!!!!!!!!!!!!!!!!
+	// not sure what to do with the animal variable here
+	
+	request(start_floor, destination_floor, pet_type, num_pets);
+}
 
 
 int elevator_on(void * data) {
@@ -52,39 +72,38 @@ int elevator_on(void * data) {
 
 	struct list_head *position;
 	struct list_head *dummy;
-	printk(KERN_INFO "bob");
 	int check=0;
 
-	 request(3, 5, 1, 1);
-	 request(3, 7, 1, 1);
-	 request(8, 2, 2, 1);
-	 request(5, 2, 1, 1);
-	 request(8, 2, 1, 2);
+	// request(3, 5, 1, 1);
+	// request(3, 7, 1, 1);
+	// request(8, 2, 2, 1);
+	// request(5, 2, 1, 1);
+	// request(8, 2, 1, 2);
 
 
 	while (!kthread_should_stop()) {
 		ssleep(1);
 		printk("me");
+
+		mutex_lock_interruptible(&mutex);
 		a = list_first_entry_or_null(&elevator.list, Passengers, list);
 		b = list_first_entry_or_null(&passenger_list, Floors, list);
 		if (elevator.total_size != 0 && elevator.destination == 0 && a != NULL) {
 			elevator.destination = a->destination;
-			stop =-1;
-			printk(KERN_INFO " elvator people %d", a->animal);
 
 		}
 		else if (elevator.destination == 0 && elevator.total_size == 0 && b != NULL && stop !=-1) {
 			elevator.destination = b->start;
-			printk(KERN_INFO " floor people %d", b->start);
 			//kfree(b);
 		}
+		mutex_unlock(&mutex);
 
 
-		// Place Lock
 		printk(KERN_INFO " %d" ,elevator.destination);
 		printk(KERN_INFO " %d", currentfloor);
 		if (elevator.destination != 0) {
 			if(elevator.total_size != 0){
+				mutex_lock_interruptible(&mutex);
 				list_for_each_safe(position,dummy ,&elevator.list) {
 					a = list_entry(position, Passengers, list);
 					if (a->destination == currentfloor) {
@@ -93,9 +112,12 @@ int elevator_on(void * data) {
 						printk("me");
 					}
 				}
+			mutex_unlock(&mutex);
 		}
-		// Place Lock
+
+		
 		if(stop !=-1){
+			mutex_lock_interruptible(&mutex);
 			list_for_each_safe(position,dummy ,&passenger_list) {
 				b = list_entry(position, Floors, list);
 				if (b->start == currentfloor) {
@@ -106,6 +128,7 @@ int elevator_on(void * data) {
 				}
 				printk("me8");
 			}
+			mutex_unlock(&mutex);
 		}
 			printk("me9");
 		}
@@ -147,8 +170,8 @@ int elevator_on(void * data) {
 
 int add_passenger(Floors* b, struct list_head * position,int onfloor) {
 	Passengers *people;
-	if(elevator.total_size ==0 ){}
-	else if ((elevator.total_weight + b->weight) > MAX_Weight || ((elevator.type != b->animal && elevator.animal != 0)|| (b->animal==0)) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
+	if(elevator.total_size ==0){}
+	else  if ((elevator.total_weight + b->weight) > MAX_Weight || ((elevator.type != b->animal && elevator.animal != 0)|| (b->animal==0)) || (onfloor < elevator.destination && b->start > b->destination) || (onfloor > elevator.destination && b->start < b->destination)) {
 		return 0;
 	}
 	printk("me2");
@@ -182,9 +205,10 @@ int delete_passenger(struct list_head* position, Passengers *a,int ev) {
 		elevator.animal -= a->animal;
 		elevator.total_weight -= a->weight;
 		elevator.total_size-= a->total;
-		if (elevator.animal == 0) {
+		if (elevator.total_size == 0) {
 			elevator.type = 0;
 		}
+		
 	}
 	serviced+= a->total;
 	list_del(position);
@@ -217,13 +241,14 @@ ssize_t procfile_read(struct file *sp_file, char __user *buf, size_t size, loff_
 
 	strcat(message,"Elevator state: ");
 	printk("1\n");	
-	if (elevator.destination == 0 && elevator.total_size == 0 && waiting == 0){
-		strcat(message,"IDLE\n");
-		}
-	else if (stop == -1&&elevator.total_size ==0) {
-		strcat(message,"STOPPED\n");
+	 if (stop == -1 &&elevator.total_size ==0) {
+		strcat(message,"OFFLINE\n");
 	}
 
+	else if (elevator.destination == 0 && elevator.total_size == 0 && waiting == 0){
+		strcat(message,"IDLE\n");
+		}
+	
 	else if (currentfloor > elevator.destination && elevator.destination != 0) {
 		strcat(message,"DOWN\n");
 
@@ -356,11 +381,12 @@ static struct file_operations myops = {
 
 static int __init elevatorProtacal(void){
 
-//	STUB_start_elevator = start_elevator;
-//	STUB_stop_elevator = stop_elevator;
-//	STUB_issue_request = issue_request;
 	mutex_init(&mutex);
-	proc_entry2 = proc_create("elevate", 0666, NULL, &myops);
+	STUB_start_elevator = start_elevator;
+	STUB_stop_elevator = stop_elevator;
+	STUB_issue_request = issue_request;
+	mutex_init(&mutex);
+	proc_entry2 = proc_create("elevator", 0666, NULL, &myops);
 	proc_entry  = kthread_run(elevator_on, NULL, "elevator");
 
 	if(proc_entry == NULL)
@@ -386,31 +412,14 @@ int request(int rStart, int rDest, int rAnimal, int rWeight) {
 	return 1;
 }
 
-extern long (*STUB_start_elevator) (void);
-int start_elevator(void) {
-	currentfloor = 1;
-        stop =0;
-	return 0;
-}
-
-extern long (*STUB_stop_elevator) (void);
-int stop_elevator(void) {
-	stop = -1;
-	return 0;
-}
-
-extern long (*STUB_issue_request) (int, int , int,int);
-int issue_request(int num_pets, int pet_type, int  start_floor, int destination_floor) {
-	// I DO NOT THINK THIS IS CORRECT!!!!!!!!!!!!!!!!!
-	// not sure what to do with the animal variable here
-	
-	request(start_floor, destination_floor, pet_type, num_pets);
-}
 
 static void __exit hello_end(void){
-
+	mutex_destroy(&mutex);
+	STUB_start_elevator = NULL;
+	STUB_stop_elevator = NULL;
+	STUB_issue_request = NULL;
 	kthread_stop(proc_entry);
-	remove_proc_entry("elevate", NULL);
+	remove_proc_entry("elevator", NULL);
 	printk(KERN_INFO "Cleaning up module.\n");
 	return;
 }
